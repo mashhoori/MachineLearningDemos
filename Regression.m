@@ -115,7 +115,6 @@ for po = orders
 
     set(gcf,'Name',['Polynomial of order ' num2str(orderOfPolynomial)]);
     set(gcf, 'Units', 'normalized', 'Position', [0,0,1,1]);
-    text(0 ,25, 'Hi Hi Hi hi')
         
     pause(3);
     close;    
