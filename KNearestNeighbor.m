@@ -1,7 +1,7 @@
 
 clear 
 close all
-addpath('MNIST');
+addpath('.\MNIST\');
 
 %% Loading the Data
 trainImages = loadMNISTImages('\MNIST\train-images.idx3-ubyte');
