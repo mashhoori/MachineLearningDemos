@@ -30,7 +30,7 @@ plot(y, res.predMean, '.k')
 hold on 
 plot(y, res.predMean + res.predSigma, '.g')
 plot(y, res.predMean - res.predSigma, '.g')
-
+plot(y, res.predMaxComp, '.r')
 
 end
 
@@ -38,7 +38,7 @@ function params = DefineParams(inputDim, nHidden, targetDim, numCenters)
  
 nOutput = numCenters + (targetDim * numCenters) + numCenters;
 
-scale = sqrt(6 / inputDim + nOutput); 
+scale = sqrt(6 / (inputDim + nOutput)); 
 wInpToHid = rand(inputDim + 1, nHidden)* scale - scale/2;
 
 scale = sqrt(6 / nHidden); 
@@ -151,7 +151,7 @@ end
 function params = Train(inputBatch, target, params)
 
 lr = 0.01;
-for iter = 1:100000   
+for iter = 1:100000
     output = ForwardPass(inputBatch, params);
     [cost, grad] = ComputeCostAndLastLayerGradient(output, target);
     fprintf('The cost is %f \n', cost);
@@ -185,8 +185,16 @@ for i = 1:numCenters
 end
 sigma = sqrt(sigma);
 
+[~, maxCompInd] = max(output.centersProbs, [], 2);
+predMaxProb = zeros(batchSize, targetDim);
+for i = 1:numCenters 
+    predMaxProb(maxCompInd == i, :) = output.centerLocs(maxCompInd == i, :, i);    
+end
+
 output.predMean = predMean;
 output.predSigma = sigma;
+output.predMaxComp = predMaxProb;
+
 
 end
 
