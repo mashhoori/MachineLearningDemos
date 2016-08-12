@@ -10,7 +10,7 @@ testImages = loadMNISTImages('\MNIST\t10k-images.idx3-ubyte');
 testLabels = loadMNISTLabels('\MNIST\t10k-labels.idx1-ubyte');
 
 %% Reducing the size of the training set (to make the training process faster)
-ratio = 0.2; % The ratio of the samples that we want to use for training 
+ratio = 1; % The ratio of the samples that we want to use for training 
 numTrain = floor(ratio * numel(trainLabels));
 trainIndices = randsample(numel(trainLabels), numTrain, false);
 
