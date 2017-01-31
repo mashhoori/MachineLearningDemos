@@ -13,7 +13,6 @@ nHidden = 20;
 
 params = DefineParams(inputDim, nHidden, targetDim, numCenters);
 
-
 f = @(t) t + (rand(size(t)) * 0.2) - 0.1 + 0.3*sin(2*pi*t);
 t = linspace(0,1, 1000);
 t = t(:);
@@ -32,24 +31,38 @@ plot(y, res.predMean + res.predSigma, '.g')
 plot(y, res.predMean - res.predSigma, '.g')
 plot(y, res.predMaxComp, '.r')
 
+figure
+plot(y, res.centersProbs, '.')
+
+
+figure
+plot(y, t, '.'); 
+hold on
+plot(y, squeeze(res.centerLocs))
+
+
 end
 
 function params = DefineParams(inputDim, nHidden, targetDim, numCenters)
  
 nOutput = numCenters + (targetDim * numCenters) + numCenters;
 
-scale = sqrt(6 / (inputDim + nOutput)); 
+scale = sqrt(6 / (inputDim + nOutput)) ; 
 wInpToHid = rand(inputDim + 1, nHidden)* scale - scale/2;
+wInpToHid(1, :) = 0;
 
 scale = sqrt(6 / nHidden); 
 wHidToOut = rand(nHidden + 1, nOutput) * scale - scale/2;
+wHidToOut(1, :) = 0;
 
-params.wInpToHid = wInpToHid;
-params.wHidToOut = wHidToOut;
+
 params.numCenters = numCenters;
 params.centerProbIndices = 1:numCenters;
 params.centerLocIndices  = numCenters+1: numCenters + (targetDim * numCenters);
 params.centerVarIndices = params.centerLocIndices(end)+1:nOutput;
+
+params.wInpToHid = wInpToHid;
+params.wHidToOut = wHidToOut;
 
 end
 
@@ -113,9 +126,9 @@ LogProbMargin = log(probMargin);
 cost = -sum(LogProbMargin);
 
 posterior =  bsxfun(@rdivide, probAll, probMargin);
-
-probGrad = netOutput.centersProbs - posterior;
+probGrad = (netOutput.centersProbs - posterior);
 sigmaGrad = - posterior .* (norm_k ./ (squeeze(netOutput.centerVars) .^ 2) - targetDim);
+
 muGrad = zeros(size(netOutput.centerLocs));
 for k=1:numCenters
     muGrad(:, :, k) = diff_k(:, :, k) .* repmat(posterior(:, k), 1, targetDim) ./ repmat(netOutput.centerVars(:, 1, k) .^ 2, 1, targetDim);
@@ -143,24 +156,25 @@ end
 
 function params = UpdateParams(gradInfo, params, learningRate)
 
-params.wInpToHid = params.wInpToHid - learningRate * gradInfo.inputGrad;
+params.wInpToHid = params.wInpToHid - learningRate  * gradInfo.inputGrad;
 params.wHidToOut = params.wHidToOut - learningRate * gradInfo.hiddenGrad;
 
 end
 
-function params = Train(inputBatch, target, params)
+function params = Train(input, target, params)
 
-lr = 0.01;
-for iter = 1:100000
-    output = ForwardPass(inputBatch, params);
+lr = 0.001;
+for iter = 1:30000
+    output = ForwardPass(input, params);
+ 
     [cost, grad] = ComputeCostAndLastLayerGradient(output, target);
     fprintf('The cost is %f \n', cost);
     
     gradInfo = BackPropagate(grad, output, params);
     params = UpdateParams(gradInfo, params, lr);
     
-    if(iter < 30000)
-        lr  = lr * 0.9998;
+    if(iter > 100000)
+        lr  = lr * 0.9999;
     end     
 end
 
@@ -174,16 +188,25 @@ targetDim  = size(output.centerLocs, 2);
 
 batchSize = size(output.input, 1);
 
+netInput = exp(output.centersProbs * 10);
+centersProbs = bsxfun(@rdivide, netInput, sum(netInput, 2));
+output.centersProbs = centersProbs;
+
 predMean = zeros(batchSize, targetDim);
 for i = 1:numCenters 
     predMean = predMean + bsxfun(@times, output.centerLocs(:, :, i), output.centersProbs(:, i));
 end
 
+% plot(t, output.centerLocs(:, :, 1), '.')
+% plot(t, output.centerLocs(:, :, 2), '.')
+% plot(t, output.centerLocs(:, :, 3), '.')
+
 sigma = 0;
 for i = 1:numCenters 
-    sigma = sigma + (sum((output.centerLocs(:, :, i) - predMean) .^ 2, 2) + (output.centerVars(:, :, i) .^ 2)) .* output.centersProbs(:, i);
+    sigma = sigma + ( sum((output.centerLocs(:, :, i) - predMean) .^ 2, 2) + (output.centerVars(:, :, i) .^ 2)) .* output.centersProbs(:, i);
 end
 sigma = sqrt(sigma);
+
 
 [~, maxCompInd] = max(output.centersProbs, [], 2);
 predMaxProb = zeros(batchSize, targetDim);
