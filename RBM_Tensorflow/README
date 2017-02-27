@@ -1,2 +1,2 @@
-Restricted Boltzmann Machine implementation in TensorFlow.
+Restricted Boltzmann Machine (RBM) implementation in TensorFlow.
 Training is possible using both contrastive divergence (CD) and persistent contrastive divergence (PCD).
