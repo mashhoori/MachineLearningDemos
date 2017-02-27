@@ -1,0 +1,2 @@
+Restricted Boltzmann Machine implementation in TensorFlow.
+Training is possible using both contrastive divergence and persistent contrastive divergence.
