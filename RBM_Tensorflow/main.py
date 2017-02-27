@@ -17,7 +17,6 @@ tf.reset_default_graph()
 
 costTotal = 0
 rbm = RBM.RBM(500, 28*28, 15, True)
-
 for i in range(5000):
      batch_x, batch_y = mnist.train.next_batch(100)
      cost = rbm.train_for_batch(batch_x)         
@@ -36,6 +35,8 @@ for i in range(5000):
 params = rbm.get_parameters()             
 rbm.save_model()
 rbm.close()        
+
+###########################################################################
 
 batch_x, batch_y = mnist.validation.next_batch(100)
 tf.reset_default_graph()
